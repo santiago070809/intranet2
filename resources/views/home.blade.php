@@ -212,83 +212,82 @@
 <div class="row text-center justify-content-center mb-5">
 
     <!-- BOTÓN 1 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-people-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            BIENESTAR Y DESARROLLO INSTITUCIONAL<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'bienestar-y-desarrollo-institucional']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-people-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        BIENESTAR Y DESARROLLO INSTITUCIONAL<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
+</div>
 
-    <!-- BOTÓN 2 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'GESTION TALENTO HUMANO']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-briefcase-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            GESTION TALENTO HUMANO<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<!-- BOTÓN 2 -->
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'gestion-talento-humano']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-briefcase-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        GESTION TALENTO HUMANO<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
+</div>
 
-    <!-- BOTÓN 3 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'GESTION DEL CONOCIMIENTO']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-file-earmark-text-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            GESTION DEL CONOCIMIENTO<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<!-- BOTÓN 3 -->
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'gestion-del-conocimiento']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-file-earmark-text-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        GESTION DEL CONOCIMIENTO<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
+</div>
 
-    <!-- BOTÓN 4 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'GESTION ORGANIZACIONAL']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-folder-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            GESTION ORGANIZACIONAL<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<!-- BOTÓN 4 -->
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'gestion-organizacional']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-folder-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        GESTION ORGANIZACIONAL<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
+</div>
 
-    <!-- BOTÓN 5 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-database-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<!-- BOTÓN 5 -->
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'grupo-de-seguridad-y-salud-en-el-trabajo']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-database-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
+</div>
 
-    <!-- BOTÓN 6 -->
-    <div class="col-6 col-md-2 mb-3">
-        <a href="{{ route('noticias.create', ['categoria' => 'GESTION DE LA TECNOLOGIA']) }}" class="icon-link">
-            <div class="d-flex justify-content-center">
-                <i class="bi bi-database-fill circulo-icono"></i>
-            </div>
-        </a>
-        <div class="mt-2 text-dark">
-            GESTION DE LA TECNOLOGIA<br>
-            <small><a href="#" class="text-decoration-none">Más Información</a></small>
+<!-- BOTÓN 6 -->
+<div class="col-6 col-md-2 mb-3">
+    <a href="{{ route('noticias.partes', ['categoria' => 'gestion-de-la-tecnologia']) }}" class="icon-link">
+        <div class="d-flex justify-content-center">
+            <i class="bi bi-database-fill circulo-icono"></i>
         </div>
+    </a>
+    <div class="mt-2 text-dark">
+        GESTION DE LA TECNOLOGIA<br>
+        <small><a href="#" class="text-decoration-none">Más Información</a></small>
     </div>
-
+</div>
 </div>
 
 

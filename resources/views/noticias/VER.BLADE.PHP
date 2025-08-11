@@ -13,7 +13,7 @@
             <h3 class="card-title">{{ $noticia->titulo }}</h3>
             <p class="text-muted">{{ $noticia->created_at->format('d M Y') }} - Tipo: {{ $noticia->tipo }}</p>
             <p class="card-text">{!! nl2br(e($noticia->contenido)) !!}</p>
-            <a href="{{ route('noticias.todas') }}" class="btn btn-secondary mt-3">← Volver</a>
+<a href="javascript:history.back()" class="btn btn-secondary mt-3">← Volver</a>
         </div>
     </div>
 </div>

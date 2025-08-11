@@ -1,4 +1,5 @@
-@extends(view: 'layouts.app')
+@extends('layouts.app')
+
 
 @section('title', 'Todas las Publicaciones')
 
@@ -26,7 +27,7 @@
                                                 @endif
                                                 <div class="card-body d-flex flex-column">
                                                     <h5 class="card-title">{{ $noticia->titulo }}</h5>
-                                                    <p class="card-text text-muted small">{{ $noticia->created_at->format('d M Y') }}</p>
+<p class="card-text text-muted small">{{ \Carbon\Carbon::parse($noticia->fecha_documento)->format('d M Y') }}</p>
                                                     <p class="card-text">{{ Str::limit($noticia->contenido, 80) }}</p>
                                                     <a href="{{ route('noticias.ver', $noticia->id) }}" class="btn btn-sm btn-outline-success mt-auto">Leer más</a>
 

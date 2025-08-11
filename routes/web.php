@@ -19,6 +19,7 @@ Route::get('/', [NoticiaController::class, 'inicio'])->name('home');
     Route::get('/noticias', [NoticiaController::class, 'todas'])->name('noticias.todas');
     Route::get('/noticias/create', [NoticiaController::class, 'create'])->name('noticias.create');
     Route::post('/noticias/store', [NoticiaController::class, 'store'])->name('noticias.store');
+Route::get('/noticias/partes', action: [NoticiaController::class, 'partes'])->name('noticias.partes');
 
     // Carpeta y archivo
     Route::post('/noticias/crear-carpeta', [NoticiaController::class, 'crearCarpeta'])->name('noticias.crearCarpeta');
@@ -27,5 +28,17 @@ Route::get('/', [NoticiaController::class, 'inicio'])->name('home');
 
     // Ruta para filtrar por categoría
     Route::get('/noticias/categoria/{categoria}', [NoticiaController::class, 'filtrarPorCategoria'])->name('noticias.filtrarPorCategoria');
+    // routes/web.php
+
+
+// Ruta para ver noticias por categoría
+Route::get('/noticias/categoria/{categoria}', [NoticiaController::class, 'porCategoria'])
+    ->name('noticias.categoria');
+// Ruta para filtrar noticias por categoría
+Route::get('/noticias/categoria/{categoria}', [NoticiaController::class, 'filtrarPorCategoria'])
+    ->name('noticias.filtrarPorCategoria');
+
+
+
 
 });

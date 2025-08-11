@@ -74,7 +74,10 @@
                         <li><a class="dropdown-item" href="#">Perfil</a></li>
                         <li><a class="dropdown-item" href="#">Configuración</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Cerrar sesión</a></li>
+                        <form action="{{ route('logout') }}" method="POST">
+        @csrf
+        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+    </form>
                     </ul>
                 </li>
             </ul>

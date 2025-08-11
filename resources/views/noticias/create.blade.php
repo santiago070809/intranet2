@@ -74,7 +74,7 @@
             <form action="{{ route('noticias.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="ruta_destino" value="{{ $ruta }}">
-
+                <input type="hidden" name="categoria" value="{{ $ruta }}">
 
                 <div class="mb-3">
                     <label for="titulo" class="form-label">Título</label>
@@ -90,6 +90,11 @@
                     <label for="imagen" class="form-label">Imagen destacada</label>
                     <input type="file" name="imagen" class="form-control">
                 </div>
+
+                <div class="mb-3">
+    <label for="fecha_documento" class="form-label">Fecha del documento</label>
+    <input type="date" name="fecha_documento" class="form-control">
+</div>
 
                 <div class="mb-3">
                     <label for="tipo" class="form-label">Tipo de noticia</label>
@@ -124,4 +129,13 @@
         @endif
     </div>
 </div>
+
 @endsection
+{{-- MENSAJES --}}
+@if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
