@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Iniciar Sesión - Intranet</title>
@@ -42,31 +43,33 @@
         }
     </style>
 </head>
-<body>
-<div class="login-container">
-    <img src="https://intranet.cauca.gov.co/images/logo-gobernacion-cauca.png" class="logo-login" alt="Logo">
-    <h3 class="login-title">Iniciar Sesión</h3>
 
-    @if($errors->any())
+<body>
+    <div class="login-container">
+        <img src="https://intranet.cauca.gov.co/images/logo-gobernacion-cauca.png" class="logo-login" alt="Logo">
+        <h3 class="login-title">Iniciar Sesión</h3>
+
+        @if($errors->any())
         <div class="alert alert-danger">
             {{ $errors->first() }}
         </div>
-    @endif
+        @endif
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
-        <div class="mb-3">
-            <label for="email" class="form-label">Correo institucional</label>
-            <input type="email" name="email" class="form-control" id="email" required value="{{ old('email') }}">
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Contraseña</label>
-            <input type="password" name="password" class="form-control" id="password" required>
-        </div>
-        <div class="d-grid">
-            <button type="submit" class="btn btn-green">Ingresar</button>
-        </div>
-    </form>
-</div>
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo institucional</label>
+                <input type="email" name="email" class="form-control" id="email" required value="{{ old('email') }}">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" id="password" required>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-green">Ingresar</button>
+            </div>
+        </form>
+    </div>
 </body>
+
 </html>

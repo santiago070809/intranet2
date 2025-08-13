@@ -1,15 +1,43 @@
 @extends('layouts.app')
-
 @section('title', 'Explorador y Nueva Noticia')
-
 @section('content')
 <div class="container mt-4">
     <h2 class="fw-bold text-center mb-4">Explorador de Carpetas y Noticias</h2>
 
     {{-- ÉXITO --}}
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ route('noticias.admin') }}" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Ver Lista de Noticias
+        </a>
+    </div>
+
+    {{-- FORMULARIO: NAVEGAR ENTRE CARPETAS (SOLO SUPERADMIN) --}}
+    @auth
+    @if(Auth::user()->rol === 'SUPERADMIN')
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-folder-open"></i> Navegar Carpetas
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ route('noticias.create') }}">
+                <label for="ruta">Carpeta actual:</label>
+                <select name="ruta" id="ruta" class="form-select" onchange="this.form.submit()">
+                    <option value="/">/ (raíz)</option>
+                    @foreach ($secciones as $seccion)
+                    <option value="{{ $seccion }}" {{ $ruta === $seccion ? 'selected' : '' }}>
+                        {{ $seccion }}
+                    </option>
+                    @endforeach
+                </select>
+            </form>
+        </div>
+    </div>
+    @endif
+    @endauth
 
     {{-- FORMULARIO: CREAR CARPETA --}}
     <div class="card mb-4">
@@ -30,38 +58,20 @@
         </div>
     </div>
 
-    {{-- FORMULARIO: NAVEGAR ENTRE CARPETAS --}}
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <i class="fas fa-folder-open"></i> Navegar Carpetas
-        </div>
-        <div class="card-body">
-            <form method="GET" action="{{ route('noticias.create') }}">
-                <label for="ruta">Carpeta actual:</label>
-                <select name="ruta" id="ruta" class="form-select" onchange="this.form.submit()">
-                    <option value="/">/ (raíz)</option>
-                    @foreach ($secciones as $seccion)
-                        <option value="{{ $seccion }}" {{ $ruta === $seccion ? 'selected' : '' }}>{{ $seccion }}</option>
-                    @endforeach
-                </select>
-            </form>
-        </div>
-    </div>
-
     {{-- VISUALIZAR SUBCARPETAS COMO EXPLORADOR --}}
     <div class="mb-4">
         <h5 class="fw-bold">📁 Carpetas en: {{ $ruta }}</h5>
         @if(count($rutas))
-            <ul class="list-group">
-                @foreach ($rutas as $dir)
-                    <li class="list-group-item">
-                        <i class="fas fa-folder text-warning me-2"></i>
-                        <a href="{{ route('noticias.create', ['ruta' => $dir]) }}">{{ basename($dir) }}</a>
-                    </li>
-                @endforeach
-            </ul>
+        <ul class="list-group">
+            @foreach ($rutas as $dir)
+            <li class="list-group-item">
+                <i class="fas fa-folder text-warning me-2"></i>
+                <a href="{{ route('noticias.create', ['ruta' => $dir]) }}">{{ basename($dir) }}</a>
+            </li>
+            @endforeach
+        </ul>
         @else
-            <p class="text-muted">No hay subcarpetas en esta ruta.</p>
+        <p class="text-muted">No hay subcarpetas en esta ruta.</p>
         @endif
     </div>
 
@@ -92,17 +102,29 @@
                 </div>
 
                 <div class="mb-3">
-    <label for="fecha_documento" class="form-label">Fecha del documento</label>
-    <input type="date" name="fecha_documento" class="form-control">
-</div>
+                    <label for="archivos" class="form-label">Archivos adicionales (opcional)</label>
+                    <input type="file" name="archivos[]" class="form-control" multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.mp3,.mp4,.wav,.avi">
+                </div>
 
                 <div class="mb-3">
-                    <label for="tipo" class="form-label">Tipo de noticia</label>
-                    <select name="tipo" class="form-select" required>
-                        <option value="reciente">Reciente</option>
-                        <option value="varia">Varia</option>
-                    </select>
+                    <label for="fecha_documento" class="form-label">Fecha del documento</label>
+                    <input type="date" name="fecha_documento" class="form-control">
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tipo de noticia</label><br>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="tipo[]" value="banner" id="tipo_banner">
+                        <label class="form-check-label" for="tipo_banner">Banner</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="tipo[]" value="varia" id="tipo_varia">
+                        <label class="form-check-label" for="tipo_varia">Varia</label>
+                    </div>
+                </div>
+
+
 
                 <button class="btn btn-success w-100"><i class="fas fa-save"></i> Guardar Noticia</button>
             </form>
@@ -113,29 +135,21 @@
     <div>
         <h5 class="fw-bold">🗂 Archivos en: {{ $ruta }}</h5>
         @if(count($archivos))
-            <ul class="list-group">
-                @foreach ($archivos as $file)
-                    <li class="list-group-item">
-                        <i class="fas fa-file-alt text-secondary me-2"></i>
-                        {{ basename($file) }}
-                        <a href="{{ asset('storage/' . $file) }}" class="btn btn-sm btn-outline-primary float-end" target="_blank">
-                            Ver
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
+        <ul class="list-group">
+            @foreach ($archivos as $file)
+            <li class="list-group-item">
+                <i class="fas fa-file-alt text-secondary me-2"></i> {{ basename($file) }}
+                <a href="{{ asset('storage/' . $file) }}" class="btn btn-sm btn-outline-primary float-end" target="_blank">Ver</a>
+            </li>
+            @endforeach
+        </ul>
         @else
-            <p class="text-muted">No hay archivos en esta carpeta.</p>
+        <p class="text-muted">No hay archivos en esta carpeta.</p>
         @endif
     </div>
 </div>
-
 @endsection
-{{-- MENSAJES --}}
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
 
-@if(session('error'))
-    <div class="alert alert-danger">{{ session('error') }}</div>
-@endif
+{{-- MENSAJES --}}
+@if(session('success')) <div class="alert alert-success">{{ session('success') }}</div> @endif
+@if(session('error')) <div class="alert alert-danger">{{ session('error') }}</div> @endif

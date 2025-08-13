@@ -11,7 +11,14 @@ class NoticiaController extends Controller
     public function inicio()
     {
         $noticias = Noticia::all()->groupBy('categoria');
-        $recientes = Noticia::latest()->take(3)->get();
+
+        // 🔹 Solo las últimas 3 noticias con tipo "banner"
+        $recientes = Noticia::whereJsonContains('tipo', 'banner')
+            ->latest()
+            ->take(3)
+            ->get();
+
+        // Otras noticias (puedes decidir si excluir las que son banner)
         $otras = Noticia::latest()->skip(3)->take(6)->get();
 
         return view('home', [
@@ -21,13 +28,10 @@ class NoticiaController extends Controller
         ]);
     }
 
+
     public function create(Request $request)
     {
-        // Solo permitir acceso a SUPERADMIN
-        $user = auth()->user();
-        if (!$user || $user->rol !== 'SUPERADMIN') {
-            abort(403, 'Acceso denegado. Solo el SUPERADMIN puede crear noticias.');
-        }
+        // ❌ Se elimina la restricción de rol para permitir acceso a todos los usuarios
 
         $ruta = $request->get('ruta', '/');
         $rutas = Storage::disk('public')->directories($ruta);
@@ -46,116 +50,124 @@ class NoticiaController extends Controller
     }
 
     public function store(Request $request)
-    {
-        try {
-            $request->validate([
-                'titulo' => 'required|string|max:255',
-                'contenido' => 'required|string',
-                'tipo' => 'required|string',
-                'categoria' => 'required|string',
-                'ruta_destino' => 'required|string',
-                'fecha_documento' => 'nullable|date',
-                'imagen' => 'nullable|image|max:4096',
-            ]);
+{
+    $request->validate([
+        'titulo' => 'required|string|max:255',
+        'contenido' => 'required|string',
+        'categoria' => 'required|string',
+        'fecha_documento' => 'nullable|date',
+        'tipo' => 'nullable|array',
+        'imagen' => 'nullable|image|max:4096',
+        'archivos.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,mp3,mp4,wav,avi|max:10240',
+    ]);
 
-            $noticia = new Noticia();
-            $noticia->titulo = $request->titulo;
-            $noticia->contenido = $request->contenido;
-            $noticia->tipo = $request->tipo;
-            $noticia->categoria = $request->categoria;
-            $noticia->ruta = $request->ruta_destino;
-            $noticia->fecha_documento = $request->fecha_documento; // ← aquí guardamos la fecha
+    $noticia = new Noticia();
+    $noticia->titulo = $request->titulo;
+    $noticia->contenido = $request->contenido;
+    $noticia->tipo = $request->tipo ?? [];
+    $noticia->categoria = $request->categoria;
+    $noticia->ruta = $request->ruta_destino;
+    $noticia->fecha_documento = $request->fecha_documento;
 
-            if ($request->hasFile('imagen')) {
-                $path = $request->file('imagen')->store($request->ruta_destino, 'public');
-                $noticia->imagen = $path;
-            }
-
-            $noticia->save();
-
-            return redirect()
-                ->route('noticias.create', ['ruta' => $request->ruta_destino])
-                ->with('success', '✅ Noticia creada correctamente.');
-        } catch (\Exception $e) {
-            return redirect()
-                ->route('noticias.create', ['ruta' => $request->ruta_destino])
-                ->with('error', '❌ Ocurrió un error al crear la noticia: ' . $e->getMessage());
-        }
+    if ($request->hasFile('imagen')) {
+        $noticia->imagen = $request->file('imagen')->store($request->ruta_destino, 'public');
     }
 
-    public function todas()
+    $noticia->save();
+
+    // Archivos opcionales
+    if ($request->hasFile('archivos')) {
+        $archivosArray = [];
+        foreach ($request->file('archivos') as $archivo) {
+            $path = $archivo->store($request->ruta_destino, 'public');
+            $archivosArray[] = $path;
+        }
+        $noticia->archivos = $archivosArray;
+        $noticia->save();
+    }
+
+    return redirect()
+        ->route('noticias.create', ['ruta' => $request->ruta_destino])
+        ->with('success', '✅ Noticia creada correctamente.');
+}
+
+
+
+    public function todas(Request $request)
+{
+    $search = $request->input('search'); // Texto del buscador
+
+    $noticiasPorCategoria = [];
+
+    // Obtenemos todas las noticias que coincidan con la búsqueda (o todas si no hay búsqueda)
+    $noticias = Noticia::query();
+
+    if ($search) {
+        $noticias->where(function ($q) use ($search) {
+            $q->where('titulo', 'LIKE', "%{$search}%")
+              ->orWhere('categoria', 'LIKE', "%{$search}%");
+        });
+    }
+
+    $noticias = $noticias->orderBy('fecha_documento', 'desc')->get();
+
+    // Agrupamos por categoría, solo las que tengan noticias
+    $noticiasPorCategoria = $noticias->groupBy('categoria');
+
+    return view('noticias.todas', compact('noticiasPorCategoria', 'search'));
+}
+
+
+
+    public function partes(Request $request)
     {
-        $categorias = [
-            'BIENESTAR Y DESARROLLO INSTITUCIONAL',
-            'GESTION TALENTO HUMANO',
-            'GESTION DEL CONOCIMIENTO',
-            'GESTION ORGANIZACIONAL',
-            'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
-            'GESTION DE LA TECNOLOGIA',
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Debes iniciar sesión primero');
+        }
+
+        $mapaCategorias = [
+            'bienestar-y-desarrollo-institucional' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
+            'gestion-talento-humano' => 'GESTION TALENTO HUMANO',
+            'gestion-del-conocimiento' => 'GESTION DEL CONOCIMIENTO',
+            'gestion-organizacional' => 'GESTION ORGANIZACIONAL',
+            'grupo-de-seguridad-y-salud-en-el-trabajo' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
+            'gestion-de-la-tecnologia' => 'GESTION DE LA TECNOLOGIA',
         ];
 
-        $noticiasPorCategoria = [];
+        // Primero vemos si viene parámetro ruta con la ruta completa (ejemplo: BIENESTAR Y DESARROLLO INSTITUCIONAL/sys)
+        $rutaActual = $request->query('ruta');
 
-        foreach ($categorias as $categoria) {
-            $noticiasPorCategoria[$categoria] = Noticia::where('ruta', 'LIKE', "$categoria%")
-                ->orderBy('fecha_documento', 'desc')  // Ordena por fecha_documento DESC
-                ->take(6)
-                ->get();
-        }
-
-        return view('noticias.todas', compact('noticiasPorCategoria'));
-    }
-
-    
-public function partes(Request $request)
-{
-    if (!auth()->check()) {
-        return redirect()->route('login')->with('error', 'Debes iniciar sesión primero');
-    }
-
-    $mapaCategorias = [
-        'bienestar-y-desarrollo-institucional' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
-        'gestion-talento-humano' => 'GESTION TALENTO HUMANO',
-        'gestion-del-conocimiento' => 'GESTION DEL CONOCIMIENTO',
-        'gestion-organizacional' => 'GESTION ORGANIZACIONAL',
-        'grupo-de-seguridad-y-salud-en-el-trabajo' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
-        'gestion-de-la-tecnologia' => 'GESTION DE LA TECNOLOGIA',
-    ];
-
-    // Primero vemos si viene parámetro ruta con la ruta completa (ejemplo: BIENESTAR Y DESARROLLO INSTITUCIONAL/sys)
-    $rutaActual = $request->query('ruta');
-
-    // Si no viene ruta, tomamos el slug categoría y lo convertimos
-    if (!$rutaActual) {
-        $categoriaSlug = $request->query('categoria', '');
-        $rutaActual = $mapaCategorias[$categoriaSlug] ?? null;
+        // Si no viene ruta, tomamos el slug categoría y lo convertimos
         if (!$rutaActual) {
-            abort(404, 'Categoría no válida');
+            $categoriaSlug = $request->query('categoria', '');
+            $rutaActual = $mapaCategorias[$categoriaSlug] ?? null;
+            if (!$rutaActual) {
+                abort(404, 'Categoría no válida');
+            }
         }
-    }
 
-    // Validar que la ruta comience con alguna de las categorías (por seguridad)
-    $valido = false;
-    foreach ($mapaCategorias as $slug => $categoriaNombre) {
-        if (str_starts_with($rutaActual, $categoriaNombre)) {
-            $valido = true;
-            break;
+        // Validar que la ruta comience con alguna de las categorías (por seguridad)
+        $valido = false;
+        foreach ($mapaCategorias as $slug => $categoriaNombre) {
+            if (str_starts_with($rutaActual, $categoriaNombre)) {
+                $valido = true;
+                break;
+            }
         }
+        if (!$valido) {
+            abort(404, 'Ruta no permitida');
+        }
+
+        // Ahora sí: obtener subcarpetas dentro de la ruta actual
+        $subcarpetas = Storage::disk('public')->directories($rutaActual);
+
+        // Obtener noticias dentro de esta ruta (puedes decidir si quieres incluir subcarpetas o solo exacta)
+        $noticias = Noticia::where('ruta', $rutaActual)
+            ->orderBy('fecha_documento', 'desc')
+            ->get();
+
+        return view('noticias.partes', compact('rutaActual', 'subcarpetas', 'noticias'));
     }
-    if (!$valido) {
-        abort(404, 'Ruta no permitida');
-    }
-
-    // Ahora sí: obtener subcarpetas dentro de la ruta actual
-    $subcarpetas = Storage::disk('public')->directories($rutaActual);
-
-    // Obtener noticias dentro de esta ruta (puedes decidir si quieres incluir subcarpetas o solo exacta)
-    $noticias = Noticia::where('ruta', $rutaActual)
-        ->orderBy('fecha_documento', 'desc')
-        ->get();
-
-    return view('noticias.partes', compact('rutaActual', 'subcarpetas', 'noticias'));
-}
 
 
     public function ver($id)
@@ -183,6 +195,172 @@ public function partes(Request $request)
 
         return view('noticias.categoria', compact('categoria', 'noticias'));
     }
+
+    public function edit($id)
+    {
+        $user = auth()->user();
+        $noticia = Noticia::findOrFail($id);
+
+        // Mapear roles a carpetas
+        $rolCarpeta = [
+            'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
+            'TALENTO_HUMANO' => 'GESTION TALENTO HUMANO',
+            'CONOCIMIENTO' => 'GESTION DEL CONOCIMIENTO',
+            'ORGANIZACIONAL' => 'GESTION ORGANIZACIONAL',
+            'SEGURIDAD_SALUD' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
+            'TECNOLOGIA' => 'GESTION DE LA TECNOLOGIA',
+            'SUPERADMIN' => null
+        ];
+
+        $categoriaPermitida = $rolCarpeta[$user->rol] ?? null;
+
+        // Permitir si es SUPERADMIN o si la noticia pertenece a su carpeta o subcarpeta
+        if (
+            $user->rol !== 'SUPERADMIN' &&
+            !($categoriaPermitida && str_starts_with($noticia->categoria, $categoriaPermitida))
+        ) {
+            abort(403, 'No tienes permisos para editar esta noticia.');
+        }
+
+        $secciones = array_values($rolCarpeta);
+        unset($secciones[array_search(null, $secciones)]); // quitar null de SUPERADMIN
+
+        return view('noticias.edit', compact('noticia', 'secciones'));
+    }
+
+   public function update(Request $request, $id)
+{
+    $noticia = Noticia::findOrFail($id);
+
+    $request->validate([
+        'titulo' => 'required|string|max:255',
+        'contenido' => 'required|string',
+        'categoria' => 'required|string',
+        'fecha_documento' => 'nullable|date',
+        'tipo' => 'nullable|array',
+        'imagen' => 'nullable|image|max:4096',
+        'archivos.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,mp3,mp4,wav,avi|max:10240',
+    ]);
+
+    $categoriaAnterior = $noticia->categoria;
+    $noticia->titulo = $request->titulo;
+    $noticia->contenido = $request->contenido;
+    $noticia->tipo = $request->tipo ?? [];
+    $noticia->categoria = $request->categoria;
+    $noticia->ruta = $request->categoria;
+    $noticia->fecha_documento = $request->fecha_documento;
+
+    // Imagen
+    if ($request->hasFile('imagen')) {
+        if ($noticia->imagen && Storage::disk('public')->exists($noticia->imagen)) {
+            Storage::disk('public')->delete($noticia->imagen);
+        }
+        $noticia->imagen = $request->file('imagen')->store($request->categoria, 'public');
+    } elseif ($noticia->imagen && $categoriaAnterior !== $request->categoria) {
+        $nuevoPath = $request->categoria . '/' . basename($noticia->imagen);
+        Storage::disk('public')->move($noticia->imagen, $nuevoPath);
+        $noticia->imagen = $nuevoPath;
+    }
+
+    // Archivos opcionales
+    $archivosExistentes = $noticia->archivos ?? [];
+    if ($request->hasFile('archivos')) {
+        foreach ($request->file('archivos') as $archivo) {
+            $path = $archivo->store($request->categoria, 'public');
+            $archivosExistentes[] = $path;
+        }
+    }
+
+    // Mover archivos si cambió categoría
+    if ($categoriaAnterior !== $request->categoria && !empty($archivosExistentes)) {
+        $archivosMovidos = [];
+        foreach ($archivosExistentes as $archivo) {
+            $nuevoPath = $request->categoria . '/' . basename($archivo);
+            if (Storage::disk('public')->exists($archivo)) {
+                Storage::disk('public')->move($archivo, $nuevoPath);
+            }
+            $archivosMovidos[] = $nuevoPath;
+        }
+        $noticia->archivos = $archivosMovidos;
+    } else {
+        $noticia->archivos = $archivosExistentes;
+    }
+
+    $noticia->save();
+
+    return redirect()->route('noticias.admin')->with('success', '✅ Noticia actualizada correctamente.');
+}
+
+
+
+    public function destroy($id)
+    {
+        $user = auth()->user();
+        $noticia = Noticia::findOrFail($id);
+
+        $rolCarpeta = [
+            'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
+            'TALENTO_HUMANO' => 'GESTION TALENTO HUMANO',
+            'CONOCIMIENTO' => 'GESTION DEL CONOCIMIENTO',
+            'ORGANIZACIONAL' => 'GESTION ORGANIZACIONAL',
+            'SEGURIDAD_SALUD' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
+            'TECNOLOGIA' => 'GESTION DE LA TECNOLOGIA',
+            'SUPERADMIN' => null
+        ];
+        $categoriaPermitida = $rolCarpeta[$user->rol] ?? null;
+
+        if (
+            $user->rol !== 'SUPERADMIN' &&
+            !($categoriaPermitida && str_starts_with($noticia->categoria, $categoriaPermitida))
+        ) {
+            abort(403, 'No tienes permisos para eliminar esta noticia.');
+        }
+
+        $noticia->delete();
+
+        return redirect()->route('noticias.admin')->with('success', 'Noticia eliminada correctamente.');
+    }
+
+    public function admin(Request $request)
+    {
+        if (!auth()->check()) {
+            abort(403, 'Debes iniciar sesión.');
+        }
+
+        $user = auth()->user();
+        $search = $request->get('search');
+
+        // Mapear roles a carpetas/categorías
+        $rolCarpeta = [
+            'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
+            'TALENTO_HUMANO' => 'GESTION TALENTO HUMANO',
+            'CONOCIMIENTO' => 'GESTION DEL CONOCIMIENTO',
+            'ORGANIZACIONAL' => 'GESTION ORGANIZACIONAL',
+            'SEGURIDAD_SALUD' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
+            'TECNOLOGIA' => 'GESTION DE LA TECNOLOGIA',
+            'SUPERADMIN' => null // Sin restricción
+        ];
+
+        $categoriaPermitida = $rolCarpeta[$user->rol] ?? null;
+
+        $noticias = Noticia::when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('titulo', 'like', "%$search%")
+                    ->orWhere('categoria', 'like', "%$search%");
+            });
+        })
+            ->when($user->rol !== 'SUPERADMIN', function ($query) use ($categoriaPermitida) {
+                // Filtrar también subcarpetas
+                $query->where('categoria', 'LIKE', $categoriaPermitida . '%');
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return view('noticias.index', compact('noticias', 'search'));
+    }
+
+
+
 
     public function crearCarpeta(Request $request)
     {

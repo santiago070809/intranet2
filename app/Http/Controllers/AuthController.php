@@ -13,21 +13,21 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-   public function login(Request $request)
-{
-    $credentials = $request->only('email', 'password');
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
 
-    if (auth()->attempt($credentials)) {
-        // Guardar en sesión el usuario autenticado
-        session(['user' => auth()->user()]);
+        if (auth()->attempt($credentials)) {
+            // Guardar en sesión el usuario autenticado
+            session(['user' => auth()->user()]);
 
-        return redirect()->route('home'); // o la ruta protegida que tengas
+            return redirect()->route('home'); // o la ruta protegida que tengas
+        }
+
+        return back()->withErrors([
+            'email' => 'Credenciales incorrectas',
+        ]);
     }
-
-    return back()->withErrors([
-        'email' => 'Credenciales incorrectas',
-    ]);
-}
     public function logout(Request $request)
     {
         Auth::logout(); // ✅ Cierra sesión correctamente
