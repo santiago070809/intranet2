@@ -6,17 +6,24 @@
 <div class="container mt-4">
     <h2 class="fw-bold text-center mb-5">Publicaciones por Categoría</h2>
 
+    {{-- Mensaje cuando no hay resultados en la búsqueda --}}
+    @if($sinResultados)
+        <div class="alert alert-warning text-center">
+            No encontramos publicaciones que coincidan con <strong>"{{ $search }}"</strong>.
+        </div>
+    @endif
+
     {{-- BOTÓN DE CREAR NOTICIA SEGÚN ROL --}}
     @auth
     @php
     $rutasPorRol = [
-    'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
-    'TALENTO_HUMANO' => 'GESTION TALENTO HUMANO',
-    'CONOCIMIENTO' => 'GESTION DEL CONOCIMIENTO',
-    'ORGANIZACIONAL' => 'GESTION ORGANIZACIONAL',
-    'SEGURIDAD_SALUD' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
-    'TECNOLOGIA' => 'GESTION DE LA TECNOLOGIA',
-    'SUPERADMIN' => null // podrá elegir cualquier carpeta
+        'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'BIENESTAR Y DESARROLLO INSTITUCIONAL',
+        'TALENTO_HUMANO' => 'GESTION TALENTO HUMANO',
+        'CONOCIMIENTO' => 'GESTION DEL CONOCIMIENTO',
+        'ORGANIZACIONAL' => 'GESTION ORGANIZACIONAL',
+        'SEGURIDAD_SALUD' => 'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO',
+        'TECNOLOGIA' => 'GESTION DE LA TECNOLOGIA',
+        'SUPERADMIN' => null
     ];
 
     $rolUsuario = Auth::user()->rol ?? null;
@@ -24,22 +31,37 @@
     @endphp
 
     @if($rolUsuario === 'SUPERADMIN')
-    <a href="{{ url('/noticias/create') }}" class="btn btn-success mb-4">
-        <i class="fas fa-plus-circle"></i> Crear Noticia
-    </a>
+        <a href="{{ url('/noticias/create') }}" class="btn btn-success mb-4">
+            <i class="fas fa-plus-circle"></i> Crear Noticia
+        </a>
     @elseif($rutaAsignada)
-    <a href="{{ url('/noticias/create?ruta=' . $rutaAsignada) }}" class="btn btn-success mb-4">
-        <i class="fas fa-plus-circle"></i> Crear Noticia en mi carpeta
-    </a>
+        <a href="{{ url('/noticias/create?ruta=' . $rutaAsignada) }}" class="btn btn-success mb-4">
+            <i class="fas fa-plus-circle"></i> Crear Noticia en mi carpeta
+        </a>
     @endif
     @endauth
 
     @foreach($noticiasPorCategoria as $categoria => $noticias)
+    @php
+        // Mapa de nombres especiales a slugs fijos
+        $slugPersonalizado = [
+            'BIENESTAR Y DESARROLLO INSTITUCIONAL' => 'bienestar-y-desarrollo-institucional',
+            'GESTION TALENTO HUMANO' => 'gestion-talento-humano',
+            'GESTION DEL CONOCIMIENTO' => 'gestion-del-conocimiento',
+            'GESTION ORGANIZACIONAL' => 'gestion-organizacional',
+            'GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO' => 'grupo-de-seguridad-y-salud-en-el-trabajo',
+            'GESTION DE LA TECNOLOGIA' => 'gestion-de-la-tecnologia',
+        ];
+
+        // Si no está en el mapa, generar slug automáticamente
+        $urlCategoria = $slugPersonalizado[$categoria] ?? Str::slug($categoria);
+    @endphp
+
     <div class="mb-5">
         <h3 class="mb-3">{{ $categoria }}</h3>
 
         @if($noticias->isEmpty())
-        <p class="text-muted">No hay noticias disponibles en esta categoría.</p>
+            <p class="text-muted">No hay noticias disponibles en esta categoría.</p>
         @else
         <div id="carousel-{{ Str::slug($categoria) }}" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
@@ -68,8 +90,8 @@
                 @endforeach
             </div>
 
-            {{-- Mostrar flechas solo si no es la primera categoría y hay más de 3 noticias --}}
-            @if(!$loop->first && $noticias->count() > 3)
+            {{-- Flechas de navegación --}}
+            @if($noticias->count() > 3)
             <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ Str::slug($categoria) }}" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon"></span>
             </button>
@@ -79,40 +101,11 @@
             @endif
         </div>
 
-        {{-- Botón centrado con ícono y enlace según la categoría --}}
+        {{-- Botón siempre visible --}}
         <div class="text-center mt-3">
-            @switch($categoria)
-            @case('BIENESTAR Y DESARROLLO INSTITUCIONAL')
-            <a href="{{ route('noticias.partes', ['categoria' => 'bienestar-y-desarrollo-institucional']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-people-fill me-2"></i> Ver todas las publicaciones de esta categoría
+            <a href="{{ route('noticias.partes', ['categoria' => $urlCategoria]) }}" class="btn btn-outline-primary">
+                Ver todas las publicaciones de esta categoría
             </a>
-            @break
-            @case('GESTION TALENTO HUMANO')
-            <a href="{{ route('noticias.partes', ['categoria' => 'gestion-talento-humano']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-briefcase-fill me-2"></i> Ver todas las publicaciones de esta categoría
-            </a>
-            @break
-            @case('GESTION DEL CONOCIMIENTO')
-            <a href="{{ route('noticias.partes', ['categoria' => 'gestion-del-conocimiento']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-file-earmark-text-fill me-2"></i> Ver todas las publicaciones de esta categoría
-            </a>
-            @break
-            @case('GESTION ORGANIZACIONAL')
-            <a href="{{ route('noticias.partes', ['categoria' => 'gestion-organizacional']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-folder-fill me-2"></i> Ver todas las publicaciones de esta categoría
-            </a>
-            @break
-            @case('GRUPO DE SEGURIDAD Y SALUD EN EL TRABAJO')
-            <a href="{{ route('noticias.partes', ['categoria' => 'grupo-de-seguridad-y-salud-en-el-trabajo']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-database-fill me-2"></i> Ver todas las publicaciones de esta categoría
-            </a>
-            @break
-            @case('GESTION DE LA TECNOLOGIA')
-            <a href="{{ route('noticias.partes', ['categoria' => 'gestion-de-la-tecnologia']) }}" class="btn btn-outline-primary d-inline-flex align-items-center">
-                <i class="bi bi-database-fill me-2"></i> Ver todas las publicaciones de esta categoría
-            </a>
-            @break
-            @endswitch
         </div>
         @endif
     </div>

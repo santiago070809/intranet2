@@ -96,9 +96,8 @@
                     <!-- BÚSQUEDA -->
                     <form class="d-flex" action="{{ route('noticias.todas') }}" method="GET">
                         <input class="form-control form-control-sm me-1 search-input" type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por título o categoría">
-                        <button class="btn search-btn btn-sm" type="submit"><i class="bi bi-search"></i></button>
+                        <button class="btn search-btn btn-sm" type="submit"><i class="fas fa-search"></i></button>
                     </form>
-
 
                     <!-- MI CUENTA -->
                     <li class="nav-item dropdown">

@@ -97,24 +97,26 @@ class NoticiaController extends Controller
 {
     $search = $request->input('search'); // Texto del buscador
 
-    $noticiasPorCategoria = [];
-
-    // Obtenemos todas las noticias que coincidan con la búsqueda (o todas si no hay búsqueda)
-    $noticias = Noticia::query();
+    // Query base
+    $noticiasQuery = Noticia::query();
 
     if ($search) {
-        $noticias->where(function ($q) use ($search) {
+        $noticiasQuery->where(function ($q) use ($search) {
             $q->where('titulo', 'LIKE', "%{$search}%")
               ->orWhere('categoria', 'LIKE', "%{$search}%");
         });
     }
 
-    $noticias = $noticias->orderBy('fecha_documento', 'desc')->get();
+    // Obtenemos las noticias ordenadas
+    $noticias = $noticiasQuery->orderBy('fecha_documento', 'desc')->get();
 
-    // Agrupamos por categoría, solo las que tengan noticias
+    // Agrupamos por categoría
     $noticiasPorCategoria = $noticias->groupBy('categoria');
 
-    return view('noticias.todas', compact('noticiasPorCategoria', 'search'));
+    // Verificamos si hay resultados
+    $sinResultados = $noticias->isEmpty();
+
+    return view('noticias.todas', compact('noticiasPorCategoria', 'search', 'sinResultados'));
 }
 
 

@@ -6,15 +6,7 @@
 <div class="container mt-4">
     <h2 class="fw-bold text-center mb-5">Publicaciones en {{ $rutaActual ?: 'Raíz' }}</h2>
 
-    {{-- Botón para volver a carpeta padre --}}
-    @if($rutaActual)
-    @php
-    $partes = explode('/', $rutaActual);
-    array_pop($partes);
-    $rutaPadre = implode('/', $partes);
-    @endphp
-    <a href="{{ url('/') }}" class="btn btn-secondary mb-4">← Volver al Inicio</a>
-    @endif
+    <a href="javascript:history.back()" class="btn btn-secondary mt-3">← Volver</a>
 
     {{-- Mostrar subcarpetas --}}
     @if(count($subcarpetas) > 0)
